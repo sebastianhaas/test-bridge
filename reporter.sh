@@ -13,7 +13,7 @@
 # For more details on Default Environment Variables (those starting with "CI_"), please visit:
 # https://codeship.com/documentation/continuous-integration/set-environment-variables/
 #
-# * TESTLODGE_RELEASE_BRANCH_PREFIX=release
+# * BRANCH_PREFIX=release
 # * MOCHA_RESULT_JSON=mochaTestResults.json
 #
 # You can either add those here, or configure them on the environment tab of your
