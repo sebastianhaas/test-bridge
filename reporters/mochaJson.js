@@ -2,15 +2,18 @@
  * Reporter plugin for the default JSON reporter shipped with mocha.
  */
 
+var log4js = require('log4js');
+var logger = log4js.getLogger('reporterPlugin');
+
 module.exports = {
 	/**
 	 *  Returns an array of all test runs containing a linked test case.
  	 */
-	getTestCaseRuns: getTestCaseRuns
+	getTestRuns: getTestRuns
 };
 
 
-function getTestCaseRuns() {
+function getTestRuns() {
 	// Read file and extract relevant test runs.
 	var jsonData = readTestReportJson('./tests/reporters/mochaJson/mochaTestResults.json');
 	return extractTestCaseRuns(jsonData);
@@ -59,6 +62,7 @@ function extractTestCaseRuns(jsonData) {
 		}
 	}
 
+	logger.debug('Found %d test executions containing identifiers.', detectedTestCaseRuns.length);
 	return detectedTestCaseRuns;
 }
 
@@ -85,5 +89,7 @@ function parseTestCaseName(testCaseName, pattern) {
 		linkedTestCases.push(match[1]);
 	    match = pattern.exec(testCaseName);
 	}
+
+	logger.debug('Found %s in test case \'%s\'', linkedTestCases.length ? 'identifiers ' + linkedTestCases : 'no identifiers', testCaseName);
 	return linkedTestCases;
 }

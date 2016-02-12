@@ -25,5 +25,13 @@
   "bugs": {
     "url": "https://github.com/sebastianhaas/ci-automation/issues"
   },
-  "homepage": "https://github.com/sebastianhaas/ci-automation#readme"
+  "homepage": "https://github.com/sebastianhaas/ci-automation#readme",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "log4js": "^0.6.31",
+    "request": "^2.69.0"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.1"
+  }
 }

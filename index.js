@@ -5,24 +5,33 @@
  */
 
 var program = require('commander');
+var log4js = require('log4js');
 
-// program
-//   .version('0.0.1')
-//   .option('-p, --peppers', 'Add peppers')
-//   .option('-P, --pineapple', 'Add pineapple')
-//   .option('-b, --bbq-sauce', 'Add bbq sauce')
-//   .option('-c, --cheese [type]', 'Add the specified type of cheese [marble]', 'marble')
-//   .parse(process.argv);
+program
+  .version('0.0.1')
+  .option('-v, --verbose', 'Verbose logging')
+  .parse(process.argv);
 
-// console.log('you ordered a pizza with:');
-// if (program.peppers) console.log('  - peppers');
-// if (program.pineapple) console.log('  - pineapple');
-// if (program.bbqSauce) console.log('  - bbq');
-// console.log('  - %s cheese', program.cheese);
+var logger = log4js.getLogger();
+
+if (program.verbose) {
+  logger.setLevel('DEBUG');
+  log4js.getLogger('ciPlugin').setLevel('DEBUG');
+  log4js.getLogger('reporterPlugin').setLevel('DEBUG');
+  log4js.getLogger('managementPlugin').setLevel('DEBUG');
+}
 
 
 // DI
+// Reporter plugin
 var reporter = require('./reporters/mochaJson');
 
-// Get local test case runs
-console.log(reporter.getTestCaseRuns());
+// Test repository/management plugin
+var management = require('./management/testlodge');
+management.testRunIdentifier = 'v0.0.1';
+
+
+
+// Get local test case runs and update them remotely
+var localTestRuns = reporter.getTestRuns();
+management.updateTestCaseRuns(localTestRuns);
