@@ -1,0 +1,29 @@
+{
+  "name": "test-bridge",
+  "version": "0.0.1",
+  "description": "A tool to connect your automated test runs with your test repository.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "test-bridge": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebastianhaas/ci-automation.git"
+  },
+  "keywords": [
+    "ci",
+    "test-automation",
+    "test",
+    "repository",
+    "management"
+  ],
+  "author": "Sebastian Haas",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sebastianhaas/ci-automation/issues"
+  },
+  "homepage": "https://github.com/sebastianhaas/ci-automation#readme"
+}
