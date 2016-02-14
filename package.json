@@ -33,6 +33,8 @@
     "request": "^2.69.0"
   },
   "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-jscs": "^2.7.0",
     "jshint": "^2.9.1"
   }
 }
