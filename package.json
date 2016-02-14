@@ -28,6 +28,7 @@
   "homepage": "https://github.com/sebastianhaas/test-bridge#readme",
   "dependencies": {
     "colors": "^1.1.2",
+    "commander": "^2.9.0",
     "log4js": "^0.6.31",
     "request": "^2.69.0"
   },
