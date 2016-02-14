@@ -23,10 +23,10 @@ module.exports = {
 /**
  * Configuration
  */
-var name  = 'phonicscore';
-var project = '16153';
-var email = 'ci@phonicscore.com';
-var password = '6irnaLt8N9L8qaiNfsqGMe8ELH7z46yrDVHsAvrZ';
+var name  = '';
+var project = '';
+var email = '';
+var password = '';
 var apiUrl = 'api.testlodge.com';
 var apiVersion = 'v1';
 
