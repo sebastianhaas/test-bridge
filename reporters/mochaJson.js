@@ -7,14 +7,16 @@ var logger = log4js.getLogger('reporterPlugin');
 
 module.exports = {
   /**
-  	 *  Returns an array of all test runs containing a linked test case.
-   	 */
-  getTestRuns: getTestRuns
+   * Returns an array of all test runs containing a linked test case.
+   */
+  getTestRuns: getTestRuns,
+
+  options: {}
 };
 
 function getTestRuns() {
   // Read file and extract relevant test runs.
-  var jsonData = readTestReportJson('./tests/reporters/mochaJson/mochaTestResults.json');
+  var jsonData = readTestReportJson(module.exports.options.file);
   return extractTestCaseRuns(jsonData);
 }
 
@@ -44,7 +46,7 @@ function extractTestCaseRuns(jsonData) {
     var linkedTestCases = parseTestCaseName(testCaseRun.title);
     if (linkedTestCases.length) {
       testCaseRun.linkedTestCases = linkedTestCases;
-      testCaseRun.result = 'pending';
+      testCaseRun.result = 'skipped';
       detectedTestCaseRuns.push(testCaseRun);
     }
   }

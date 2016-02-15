@@ -7,14 +7,16 @@ var logger = log4js.getLogger('reporterPlugin');
 
 module.exports = {
   /**
-  	 *  Returns an array of all test runs containing a linked test case.
-   	 */
-  getTestRuns: getTestRuns
+   * Returns an array of all test runs containing a linked test case.
+   */
+  getTestRuns: getTestRuns,
+
+  options: {}
 };
 
 function getTestRuns() {
   // Read file and extract relevant test runs.
-  var jsonData = readTestReportJson('karmaReport.json');
+  var jsonData = readTestReportJson(module.exports.options.file);
   return extractTestCaseRuns(jsonData);
 }
 
@@ -37,7 +39,7 @@ function extractTestCaseRuns(jsonData) {
         testCaseRun.linkedTestCases = linkedTestCases;
         testCaseRun.browser = getBrowserTypeFromName(jsonData.browsers[browserId].name);
         if (testCaseRun.skipped) {
-          testCaseRun.result = '';
+          testCaseRun.result = 'skipped';
         } else {
           testCaseRun.result = testCaseRun.success ? 'passed' : 'failed';
         }
