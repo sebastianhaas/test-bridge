@@ -1,0 +1,175 @@
+{
+  "browsers": {
+    "J5RIN6sK-_Hhjeq6MetI": {
+      "id": "J5RIN6sK-_Hhjeq6MetI",
+      "fullName": "Mozilla/5.0 (Unknown; Linux x86_64) AppleWebKit/534.34 (KHTML, like Gecko) PhantomJS/1.9.2 Safari/534.34",
+      "name": "PhantomJS 1.9.2 (Linux)",
+      "state": 1,
+      "lastResult": {
+        "success": 0,
+        "failed": 1,
+        "skipped": 2,
+        "total": 3,
+        "totalTime": 108,
+        "netTime": 3,
+        "error": true,
+        "disconnected": false
+      },
+      "launchId": 63903095
+    },
+    "nmPWK5TPenTNBrWpMetJ": {
+      "id": "nmPWK5TPenTNBrWpMetJ",
+      "fullName": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/31.0.1650.63 Chrome/31.0.1650.63 Safari/537.36",
+      "name": "Chromium 31.0.1650 (Ubuntu)",
+      "state": 1,
+      "lastResult": {
+        "success": 0,
+        "failed": 1,
+        "skipped": 2,
+        "total": 3,
+        "totalTime": 112,
+        "netTime": 3,
+        "error": true,
+        "disconnected": false
+      },
+      "launchId": 36780332
+    },
+    "ammokiTp-ieS8VmpMetK": {
+      "id": "ammokiTp-ieS8VmpMetK",
+      "fullName": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0",
+      "name": "Firefox 26.0.0 (Ubuntu)",
+      "state": 1,
+      "lastResult": {
+        "success": 0,
+        "failed": 1,
+        "skipped": 2,
+        "total": 3,
+        "totalTime": 105,
+        "netTime": 1,
+        "error": true,
+        "disconnected": false
+      },
+      "launchId": 34520527
+    }
+  },
+  "result": {
+    "J5RIN6sK-_Hhjeq6MetI": [
+      {
+        "id": 0,
+        "description": "should compute the square root of 4 as 2 #TC01",
+        "suite": [
+          "sqrt"
+        ],
+        "success": true,
+        "skipped": true,
+        "time": 0,
+        "log": []
+      },
+      {
+        "id": 1,
+        "description": "should compute the square root of 3 as 2 #TC123 #TC22",
+        "suite": [
+          "sqrt"
+        ],
+        "success": true,
+        "skipped": true,
+        "time": 0,
+        "log": []
+      },
+      {
+        "id": 2,
+        "description": "should compute the square root of 2 as 2",
+        "suite": [
+          "sqrt"
+        ],
+        "success": false,
+        "skipped": false,
+        "time": 3,
+        "log": [
+          "Expected 1.414213562373095 to equal 2."
+        ]
+      }
+    ],
+    "nmPWK5TPenTNBrWpMetJ": [
+      {
+        "id": 0,
+        "description": "should compute the square root of 4 as 2 #TC01",
+        "suite": [
+          "sqrt"
+        ],
+        "success": true,
+        "skipped": true,
+        "time": 0,
+        "log": []
+      },
+      {
+        "id": 1,
+        "description": "should compute the square root of 3 as 2 #TC123 #TC22",
+        "suite": [
+          "sqrt"
+        ],
+        "success": true,
+        "skipped": true,
+        "time": 0,
+        "log": []
+      },
+      {
+        "id": 2,
+        "description": "should compute the square root of 2 as 2",
+        "suite": [
+          "sqrt"
+        ],
+        "success": false,
+        "skipped": false,
+        "time": 3,
+        "log": [
+          "Expected 1.4142135623730951 to equal 2.\nError: Expected 1.4142135623730951 to equal 2.\n    at null.<anonymous> (http://localhost:9876/base/foo.spec.js?1387461078000:12:25)"
+        ]
+      }
+    ],
+    "ammokiTp-ieS8VmpMetK": [
+      {
+        "id": 0,
+        "description": "should compute the square root of 4 as 2 #TC01",
+        "suite": [
+          "sqrt"
+        ],
+        "success": true,
+        "skipped": false,
+        "time": 12,
+        "log": []
+      },
+      {
+        "id": 1,
+        "description": "should compute the square root of 3 as 2 #TC123 #TC22",
+        "suite": [
+          "sqrt"
+        ],
+        "success": true,
+        "skipped": true,
+        "time": 0,
+        "log": []
+      },
+      {
+        "id": 2,
+        "description": "should compute the square root of 2 as 2",
+        "suite": [
+          "sqrt"
+        ],
+        "success": false,
+        "skipped": false,
+        "time": 1,
+        "log": [
+          "Expected 1.414213562373095 to equal 2.\n@http://localhost:9876/base/foo.spec.js?1387461078000:12\n"
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "success": 0,
+    "failed": 3,
+    "error": true,
+    "disconnected": false,
+    "exitCode": 1
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 5,
+    "passes": 5,
+    "pending": 0,
+    "failures": 1,
+    "start": "2016-02-10T16:57:27.897Z",
+    "end": "2016-02-10T16:57:49.513Z",
+    "duration": 21616
+  },
+  "tests": [
+    {
+      "title": "Computes all roots",
+      "fullTitle": "Root REST API returns all roots",
+      "duration": 48,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "automatically sets the current date for a new root",
+      "fullTitle": "Root REST API automatically sets the current date for a new root",
+      "duration": 26,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "makes sure all specified numbers exist before inserting a root",
+      "fullTitle": "Root REST API makes sure all specified numbers exist before inserting a root",
+      "duration": 13,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "denies numbers to have roots with themselves",
+      "fullTitle": "Root REST API denies numbers to have roots with themselves",
+      "duration": 16,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "makes sure two number IDs are present",
+      "fullTitle": "Root REST API makes sure two number IDs are present",
+      "duration": 8,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ],
+  "pending": [],
+  "failures": [
+    {
+      "title": "Uncaught error outside test suite",
+      "fullTitle": "Root REST API Uncaught error outside test suite",
+      "currentRetry": 0,
+      "err": {
+        "name": "MongoError",
+        "message": "connect ECONNREFUSED",
+        "stack": "Error: connect ECONNREFUSED\n    at exports._errnoException (util.js:746:11)\n    at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1010:19)",
+        "uncaught": true
+      }
+    },
+    {
+      "title": "makes sure two number IDs are present #TC177, #TC02",
+      "fullTitle": "Root REST API makes sure two number IDs are present",
+      "duration": 8,
+      "currentRetry": 0,
+      "err": {        
+        "name": "RandomBadError",
+        "message": "Something terrible happened, your test case failed.",
+        "stack": "Error: connect ECONNREFUSED\n    at exports._errnoException (util.js:746:11)\n    at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1010:19)",
+        "uncaught": true
+      }
+    }
+  ],
+  "passes": [
+    {
+      "title": "Computes all roots",
+      "fullTitle": "Root REST API returns all roots #TC01",
+      "duration": 48,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "automatically sets the current date for a new root #TC123 #TC44",
+      "fullTitle": "Root REST API automatically sets the current date for a new root",
+      "duration": 26,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "makes sure all specified numbers exist before inserting a root #TC09",
+      "fullTitle": " REST API makes sure all specified numbers exist before inserting a root",
+      "duration": 13,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "denies numbers to have roots with themselves #TC121",
+      "fullTitle": "Root REST API denies numbers to have roots with themselves",
+      "duration": 16,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ]
+}
