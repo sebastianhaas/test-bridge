@@ -20,38 +20,38 @@ program
   .option('-r, --reporter <pluginName>', 'The reporter plugin to use')
   .option('-m, --management <pluginName>', 'The management plugin to use')
   .option('-t, --testRun <identifier>', 'The test run to be updated by the management plugin')
-  .option('-e, --extractTestRunFromBranchName [pattern]', 
+  .option('-e, --extractTestRunFromBranchName [pattern]',
     'Extract test run pattern from branch name. Optionall extraction regex. Only available with a CI plugin.')
   .option('-v, --verbose', 'Verbose logging')
   .parse(process.argv);
 
-if(program.ci) {
+if (program.ci) {
   cmdLineOptions.ci = program.ci;
 }
 
-if(program.reporter) {
+if (program.reporter) {
   cmdLineOptions.reporter = program.reporter;
 } else {
   logger.error('No reporter plugin specified.');
   process.exit(1);
 }
 
-if(program.management) {
+if (program.management) {
   cmdLineOptions.management = program.management;
 } else {
   logger.error('No management plugin specified.');
   process.exit(1);
 }
 
-if(program.extractTestRunFromBranchName) {
+if (program.extractTestRunFromBranchName) {
   cmdLineOptions.extractTestRunFromBranchName = true;
-  if (typeof program.extractTestRunFromBranchName === 'string' || 
+  if (typeof program.extractTestRunFromBranchName === 'string' ||
     program.extractTestRunFromBranchName instanceof String) {
     cmdLineOptions.branchPattern = new RegExp(program.extractTestRunFromBranchName, 'g');
   }
 }
 
-if(program.testRun) {
+if (program.testRun) {
   cmdLineOptions.testRunIdentifier = program.testRun;
 }
 

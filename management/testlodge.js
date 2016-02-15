@@ -27,9 +27,9 @@ module.exports = {
  * Default options
  */
 var defaultOptions = {
-  apiUrl: "api.testlodge.com",
-  apiVersion: "v1"
-}
+  apiUrl: 'api.testlodge.com',
+  apiVersion: 'v1'
+};
 
 /*
  * Members
@@ -93,11 +93,10 @@ function updateTestCaseRuns(localTestRuns) {
                 for (var j = 0; j < localTestCaseRun.linkedTestCases.length; j++) {
                   var linkedTestCase = localTestCaseRun.linkedTestCases[j];
 
-
                   // Get linked test case run IDs
                   var linkedTestCaseRunIds = [];
                   // If 'overrideConfiguration' is set, ignore per-execution configuration, if any
-                  if(module.exports.options.overrideConfiguration) {
+                  if (module.exports.options.overrideConfiguration) {
                     linkedTestCaseRunIds = getLinkedTestCaseRunIds(linkedTestCase,
                       module.exports.options.overrideConfiguration, body);
                   } else {
