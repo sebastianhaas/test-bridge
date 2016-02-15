@@ -86,4 +86,4 @@ use placeholders that will be subsituted at runtime. E.g., in the following `.te
 
 ## Grunt & Gulp
 If you want to include test-bridge to your existing build tool, you can just write a simple task that makes a call to test-bridge's API. I
-already started writing a ([grunt task](https://github.com/sebastianhaas/grunt-test-bridge)).
+already started writing a [grunt task](https://github.com/sebastianhaas/grunt-test-bridge).
