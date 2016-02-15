@@ -10,25 +10,22 @@ var util = require('util');
 
 module.exports = {
   /**
-  	 *  Returns an array of all test runs containing a linked test case.
-   	 */
+   *  Returns an array of all test runs containing a linked test case.
+   */
   updateTestCaseRuns: updateTestCaseRuns,
 
   /**
-  	 * The test run to update.
-  	 */
-  testRunIdentifier: null
+   * The test run to update.
+   */
+  testRunIdentifier: null,
+
+  options: {}
 };
 
 /**
- * Configuration
+ * Members
  */
-var name  = '';
-var project = '';
-var email = '';
-var password = '';
-var apiUrl = 'api.testlodge.com';
-var apiVersion = 'v1';
+var testRunSections = {};
 
 function updateTestCaseRuns(localTestRuns) {
   if (!module.exports.testRunIdentifier) {
@@ -39,69 +36,101 @@ function updateTestCaseRuns(localTestRuns) {
   request({
     'method': 'GET',
     'uri': util.format('%s/runs.json', baseUrl()),
-    'auth': {'user': email, 'pass': password}
+    'auth': {'user': module.exports.options.email, 'pass': module.exports.options.password}
   }, function(error, response, body) {
-  if (!error && response.statusCode == 200) {
-    logger.debug('Retrieved list of test runs.');
+    if (!error && response.statusCode == 200) {
+      logger.debug('Retrieved list of test runs.');
 
-    var testRunId = getTestRunIdByName(module.exports.testRunIdentifier, body);
+      // Try to get the corresponding test run for the given identifier
+      var testRunId = getTestRunIdByName(module.exports.testRunIdentifier, body);
+      // If not, return
+      if (!testRunId) {
+        logger.warn('Could not find a corresponding test run for identifier \'%s\'.' +
+          ' Did not update any test case runs.',
+          module.exports.testRunIdentifier);
+        process.exit(0);
+      }
 
-    // Get a list of all test case runs for the current test run
-    request({
-      'method': 'GET',
-      'uri': util.format('%s/runs/%s/executed_steps.json', baseUrl(), testRunId),
-      'auth': {'user': email, 'pass': password}
-    }, function(error, response, body) {
-  if (!error && response.statusCode == 200) {
-    logger.debug('Retrieved list of test case runs.');
+      // Get the ID for the specified test run
+      request({
+        'method': 'GET',
+        'uri': util.format('%s/runs/%s/run_sections.json', baseUrl(), testRunId),
+        'auth': {'user': module.exports.options.email, 'pass': module.exports.options.password}
+      }, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+          logger.debug('Retrieved list of test run sections.');
+          testRunSections = getTestRunSections(body);
 
-    // Loop over local test case runs
-    for (var i = 0; i < localTestRuns.length; i++) {
-      var localTestCaseRun = localTestRuns[i];
+          // Get a list of all test case runs for the current test run
+          request({
+            'method': 'GET',
+            'uri': util.format('%s/runs/%s/executed_steps.json', baseUrl(), testRunId),
+            'auth': {'user': module.exports.options.email, 'pass': module.exports.options.password}
+          }, function(error, response, body) {
+            if (!error && response.statusCode == 200) {
+              logger.debug('Retrieved list of test case runs.');
 
-      // Loop over all test cases linked with the current test case run
-      for (var j = 0; j < localTestCaseRun.linkedTestCases.length; j++) {
-        var linkedTestCase = localTestCaseRun.linkedTestCases[j];
-        var linkedTestCaseRunIds = getLinkedTestCaseRunIds(linkedTestCase, body);
+              // Loop over local test case runs
+              for (var i = 0; i < localTestRuns.length; i++) {
+                var localTestCaseRun = localTestRuns[i];
 
-        // Update corresponding TestLodge runs
-        for (var k = 0; k < linkedTestCaseRunIds.length; k++) {
-          updateTestLodge(localTestCaseRun, testRunId, linkedTestCaseRunIds[k]);
+                // Loop over all test cases linked with the current test case run
+                for (var j = 0; j < localTestCaseRun.linkedTestCases.length; j++) {
+                  var linkedTestCase = localTestCaseRun.linkedTestCases[j];
+                  var linkedTestCaseRunIds = getLinkedTestCaseRunIds(linkedTestCase, localTestCaseRun.browser, body);
+
+                  // Update corresponding TestLodge runs
+                  for (var k = 0; k < linkedTestCaseRunIds.length; k++) {
+                    updateTestLodge(localTestCaseRun, testRunId, linkedTestCaseRunIds[k]);
+                  }
+                }
+              }
+            } else {
+              logger.error('Error getting list of test case runs. Status code: %s', response.statusCode);
+              if (error) {
+                logger.debug(error);
+              }
+            }
+          });
+        } else {
+          logger.error('Error getting list of test run sections. Status code: %s', response.statusCode);
+          if (error) {
+            logger.debug(error);
+          }
         }
+      });
+    } else {
+      logger.error('Error getting list of test runs. Status code: %s', response.statusCode);
+      if (error) {
+        logger.debug(error);
       }
     }
-  } else {
-    logger.error('Error getting list of test case runs. Status code: %s', response.statusCode);
-    if (error) {
-      logger.debug(error);
-    }
-  }
-			});
-  } else {
-    logger.error('Error getting list of test runs. Status code: %s', response.statusCode);
-    if (error) {
-      logger.debug(error);
-    }
-  }
-	});
+  });
 }
 
 function updateTestLodge(localTestRun, testRunId, testRunCaseRunId) {
-
-  // Gather some test execution info for the 'Actual resul' field
-  var actualResult = util.format('Duration: %sms', localTestRun.duration);
-  if (Object.keys(localTestRun.err).length) {
-    actualResult = util.format('%s\nError:\n%j', actualResult, localTestRun.err);
-  }
+  var passed;
+  var actualResult;
 
   // Check test result and map to passed/not passed
-  var passed = localTestRun.result === 'passed' ? 1 : 0;
+  if (localTestRun.result === 'skipped') {
+    passed = '';
+    actualResult = '';
+  } else {
+    passed = localTestRun.result === 'passed' ? 1 : 0;
+
+    // Gather some test execution info for the 'Actual result' field
+    actualResult = util.format('Duration: %sms', localTestRun.duration);
+    if (Object.keys(localTestRun.err).length) {
+      actualResult = util.format('%s\nError:\n%j', actualResult, localTestRun.err);
+    }
+  }
 
   // Patch remote test case run with the new (local) information
   request({
     'method': 'PATCH',
     'uri': util.format('%s/runs/%s/executed_steps/%s.json', baseUrl(), testRunId, testRunCaseRunId),
-    'auth': {'user': email, 'pass': password},
+    'auth': {'user': module.exports.options.email, 'pass': module.exports.options.password},
     'json': {
       'executed_step': {
         'passed': passed,
@@ -109,18 +138,18 @@ function updateTestLodge(localTestRun, testRunId, testRunCaseRunId) {
       }
     }
   }, function(error, response, body) {
-  if (!error && response.statusCode == 200) {
-    logger.info('Test case %s updated - %s', testRunCaseRunId, coloredStatusOutput(passed));
-  } else {
-    logger.error('Error updating test case %s. Status code: %s', testRunCaseRunId, response.statusCode);
-    if (error) {
-      logger.debug(error);
+    if (!error && response.statusCode == 200) {
+      logger.info('Test case %s updated - %s', testRunCaseRunId, coloredStatusOutput(passed));
+    } else {
+      logger.error('Error updating test case %s. Status code: %s', testRunCaseRunId, response.statusCode);
+      if (error) {
+        logger.debug(error);
+      }
     }
-  }
-	});
+  });
 }
 
-function getLinkedTestCaseRunIds(testCaseIdentifier, caseRunsBody) {
+function getLinkedTestCaseRunIds(testCaseIdentifier, localConfiguration, caseRunsBody) {
   //jscs:disable requireCamelCaseOrUpperCaseIdentifiers
   var jsonData = JSON.parse(caseRunsBody);
   var linkedTestCaseRunIds = [];
@@ -129,11 +158,34 @@ function getLinkedTestCaseRunIds(testCaseIdentifier, caseRunsBody) {
   // Loop over test case runs in the current test run and return Ids for matching test cases
   arrayLength = jsonData.executed_steps.length;
   for (var i = 0; i < arrayLength; i++) {
+    // See if test case matches
     if (jsonData.executed_steps[i].step_number === testCaseIdentifier) {
-      linkedTestCaseRunIds.push(jsonData.executed_steps[i].id);
+      // See if local configuration matches remote
+      var runSectionId = jsonData.executed_steps[i].run_section_id;
+      if (testRunSections[runSectionId].selected_configuration === localConfiguration) {
+        // If both applies, push to resulting array
+        linkedTestCaseRunIds.push(jsonData.executed_steps[i].id);
+      }
     }
   }
   return linkedTestCaseRunIds;
+  //jscs:enable requireCamelCaseOrUpperCaseIdentifiers
+}
+
+function getTestRunSections(responseBody) {
+  //jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+  var runSections = {};
+  var arrayLength;
+  var jsonBody = JSON.parse(responseBody);
+  for (var i = 0; i < jsonBody.run_sections.length; i++) {
+    runSections[jsonBody.run_sections[i].id] = jsonBody.run_sections[i];
+    logger.debug('Found test run section %s using configuration \'%s\'',
+      jsonBody.run_sections[i].id,
+      jsonBody.run_sections[i].selected_configuration);
+  }
+
+  logger.debug('Found %s run sections in the current test run.', Object.keys(runSections).length);
+  return runSections;
   //jscs:enable requireCamelCaseOrUpperCaseIdentifiers
 }
 
@@ -145,13 +197,19 @@ function getTestRunIdByName(testRunIdentifier, runsBody) {
   arrayLength = jsonData.runs.length;
   for (var i = 0; i < arrayLength; i++) {
     if (jsonData.runs[i].name === testRunIdentifier) {
+      logger.debug('Found test run %s for name \'%s\'', jsonData.runs[i].id, testRunIdentifier);
       return jsonData.runs[i].id;
     }
   }
 }
 
 function baseUrl() {
-  return util.format('https://%s.%s/%s/projects/%s', name, apiUrl, apiVersion, project);
+  return util.format('https://%s.%s/%s/projects/%s',
+    module.exports.options.name,
+    module.exports.options.apiUrl,
+    module.exports.options.apiVersion,
+    module.exports.options.project
+  );
 }
 
 function coloredStatusOutput(testResult) {
