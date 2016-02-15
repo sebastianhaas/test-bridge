@@ -8,15 +8,15 @@ module.exports = {
 /*
  * Dependencies
  */
- var logger = require('log4js').getLogger();
- var merge = require('merge');
+var logger = require('log4js').getLogger();
+var merge = require('merge');
 
 /*
  * Plugins
  */
- var ci;
- var reporter = {};
- var management;
+var ci;
+var reporter = {};
+var management;
 
 /*
  * Default configuration
@@ -25,7 +25,6 @@ var defaultOptions = {
   extractTestRunFromBranchName: false,
   branchPattern: /release\/(v\d+\.\d+\.\d+)/g
 };
-
 
 /**
  * Main program
@@ -43,12 +42,12 @@ function execute(options) {
   // Pass options to injected plugins
   reporter.options = options.reporterOptions;
   management.options = options.managementOptions;
-  if(ci) {
+  if (ci) {
     ci.options = options.cmdLineOptions;
   }
 
   // If enabled, get information from CI plugin
-  if(ci) {
+  if (ci) {
     var ciBranchName = ci.getBranchName();
     var ciBuildUrl = ci.getBuildUrl();
   }
@@ -64,7 +63,7 @@ function execute(options) {
         ciBranchName, management.testRunIdentifier);
     }
   } else {
-    if(!options.testRunIdentifier) {
+    if (!options.testRunIdentifier) {
       logger.error('If branch name extraction is not enabled, and/or no CI plugin enabled, you must specify the ' +
         'remote test run to be updated by name.');
       process.exit(1);
@@ -102,7 +101,7 @@ function injectPluginDependencies(ciPluginName, reporterPluginName, managementPl
   management = require('./management/' + managementPluginName);
 
   // Optional plugins
-  if(ciPluginName) {
+  if (ciPluginName) {
     ci = require('./ci/' + ciPluginName);
   }
 }
@@ -110,10 +109,44 @@ function injectPluginDependencies(ciPluginName, reporterPluginName, managementPl
 function getRCOptions(file) {
   var rcOptions;
   var fs = require('fs');
-  if(file) {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } else {
-    return JSON.parse(fs.readFileSync('./.testbridgerc', 'utf8'));    
+  try {
+    if (file) {
+      rcOptions = JSON.parse(fs.readFileSync(file, 'utf8'));
+    } else {
+      rcOptions = JSON.parse(fs.readFileSync('./.testbridgerc', 'utf8'));
+    }
+  } catch (e) {
+    logger.error('Failed to read .testbridgerc', err);
   }
+
+  // Replace environmet variable placeholders
+  fillEnvironmentVariablePlaceholders(rcOptions);
+
   return rcOptions;
+}
+
+function fillEnvironmentVariablePlaceholders(options) {
+  // The pattern to search for
+  var pattern = /\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g;
+
+  for (var property in options) {
+    if (options.hasOwnProperty(property)) {
+      if (typeof options[property] == 'object') {
+        fillEnvironmentVariablePlaceholders(options[property]);
+      } else {
+        var match = pattern.exec(options[property]);
+        if (match) {
+          if (process.env[match[1]]) {
+            logger.debug('Successfully replaced \'%s\' with value from environment variable.', options[property]);
+            options[property] = process.env[match[1]];
+          } else {
+            logger.error('Failed to replace \'%s\' with value from environment variable.', options[property]);
+            process.exit(1);
+          }
+        }
+        // Reset internal regexp index
+        pattern.lastIndex = 0;
+      }
+    }
+  }
 }
