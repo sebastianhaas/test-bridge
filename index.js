@@ -1,37 +1,119 @@
-#!/usr/bin/env node
+/**
+ * test-bridge
+ */
+module.exports = {
+  execute: execute,
+};
+
+/*
+ * Dependencies
+ */
+ var logger = require('log4js').getLogger();
+ var merge = require('merge');
+
+/*
+ * Plugins
+ */
+ var ci;
+ var reporter = {};
+ var management;
+
+/*
+ * Default configuration
+ */
+var defaultOptions = {
+  extractTestRunFromBranchName: false,
+  branchPattern: /release\/(v\d+\.\d+\.\d+)/g
+};
+
 
 /**
- * Module dependencies.
+ * Main program
  */
+function execute(options) {
 
-var program = require('commander');
-var log4js = require('log4js');
+  // Merge options with defaults and options file
+  var rcOptions = getRCOptions();
+  rcOptions = merge(defaultOptions, rcOptions);
+  options = merge(rcOptions, options);
 
-program
-  .version('0.0.1')
-  .option('-v, --verbose', 'Verbose logging')
-  .parse(process.argv);
+  // Inject plugins
+  injectPluginDependencies(options.ci, options.reporter, options.management);
 
-var logger = log4js.getLogger();
+  // Pass options to injected plugins
+  reporter.options = options.reporterOptions;
+  management.options = options.managementOptions;
+  if(ci) {
+    ci.options = options.cmdLineOptions;
+  }
 
-if (program.verbose) {
-  logger.setLevel('DEBUG');
-  log4js.getLogger('ciPlugin').setLevel('DEBUG');
-  log4js.getLogger('reporterPlugin').setLevel('DEBUG');
-  log4js.getLogger('managementPlugin').setLevel('DEBUG');
+  // If enabled, get information from CI plugin
+  if(ci) {
+    var ciBranchName = ci.getBranchName();
+    var ciBuildUrl = ci.getBuildUrl();
+  }
+
+  // If CI plugin enabled and flag set, extract test run name from current branch
+  if (ci && options.extractTestRunFromBranchName) {
+    management.testRunIdentifier = getTestRunFromBranch(ciBranchName, options.branchPattern);
+    if (!management.testRunIdentifier) {
+      logger.info('Current branch \'%s\' did not trigger a test repository update.', ciBranchName);
+      process.exit();
+    } else {
+      logger.info('Current branch \'%s\' triggered a test repository update for test run \'%s\'',
+        ciBranchName, management.testRunIdentifier);
+    }
+  } else {
+    if(!options.testRunIdentifier) {
+      logger.error('If branch name extraction is not enabled, and/or no CI plugin enabled, you must specify the ' +
+        'remote test run to be updated by name.');
+      process.exit(1);
+    }
+    management.testRunIdentifier = options.testRunIdentifier;
+  }
+
+  // Get local test case runs
+  var localTestRuns = reporter.getTestRuns();
+
+  // Update local test results in remote test management tool
+  if (localTestRuns.length > 0) {
+    management.updateTestCaseRuns(localTestRuns);
+  } else {
+    logger.info('No local test results contained linked test cases.');
+    process.exit();
+  }
 }
 
+function getTestRunFromBranch(branchName, pattern) {
+  var match = pattern.exec(branchName);
+  if (match != null) {
+    return match[1];
+  } else {
+    return false;
+  }
+}
 
-// DI
-// Reporter plugin
-var reporter = require('./reporters/mochaJson');
+/**
+ * Injects plugins
+ */
+function injectPluginDependencies(ciPluginName, reporterPluginName, managementPluginName) {
+  // Required plugins
+  reporter = require('./reporters/' + reporterPluginName);
+  management = require('./management/' + managementPluginName);
 
-// Test repository/management plugin
-var management = require('./management/testlodge');
-management.testRunIdentifier = 'v0.0.1';
+  // Optional plugins
+  if(ciPluginName) {
+    ci = require('./ci/' + ciPluginName);
+  }
+}
 
-
-
-// Get local test case runs and update them remotely
-var localTestRuns = reporter.getTestRuns();
-management.updateTestCaseRuns(localTestRuns);
+function getRCOptions(file) {
+  var rcOptions;
+  var fs = require('fs');
+  if(file) {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } else {
+    return JSON.parse(fs.readFileSync('./.testbridgerc', 'utf8'));    
+  }
+  return rcOptions;
+}

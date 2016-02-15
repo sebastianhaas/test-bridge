@@ -5,6 +5,7 @@
 var colors = require('colors');
 var log4js = require('log4js');
 var logger = log4js.getLogger('managementPlugin');
+var merge = require('merge');
 var request = require('request');
 var util = require('util');
 
@@ -22,14 +23,27 @@ module.exports = {
   options: {}
 };
 
-/**
+/*
+ * Default options
+ */
+var defaultOptions = {
+  apiUrl: "api.testlodge.com",
+  apiVersion: "v1"
+}
+
+/*
  * Members
  */
 var testRunSections = {};
 
 function updateTestCaseRuns(localTestRuns) {
+
+  // Merge options
+  module.exports.options = merge(defaultOptions, module.exports.options);
+
   if (!module.exports.testRunIdentifier) {
-    return new Error('No test run specified.');
+    logger.error('No test run identifier specified.');
+    process.exit(1);
   }
 
   // Get the ID for the specified test run
@@ -69,6 +83,7 @@ function updateTestCaseRuns(localTestRuns) {
           }, function(error, response, body) {
             if (!error && response.statusCode == 200) {
               logger.debug('Retrieved list of test case runs.');
+              var numberOfUpdatedTestCaseRuns = 0;
 
               // Loop over local test case runs
               for (var i = 0; i < localTestRuns.length; i++) {
@@ -77,14 +92,26 @@ function updateTestCaseRuns(localTestRuns) {
                 // Loop over all test cases linked with the current test case run
                 for (var j = 0; j < localTestCaseRun.linkedTestCases.length; j++) {
                   var linkedTestCase = localTestCaseRun.linkedTestCases[j];
-                  var linkedTestCaseRunIds = getLinkedTestCaseRunIds(linkedTestCase, localTestCaseRun.browser, body);
+
+
+                  // Get linked test case run IDs
+                  var linkedTestCaseRunIds = [];
+                  // If 'overrideConfiguration' is set, ignore per-execution configuration, if any
+                  if(module.exports.options.overrideConfiguration) {
+                    linkedTestCaseRunIds = getLinkedTestCaseRunIds(linkedTestCase,
+                      module.exports.options.overrideConfiguration, body);
+                  } else {
+                    linkedTestCaseRunIds = getLinkedTestCaseRunIds(linkedTestCase, localTestCaseRun.browser, body);
+                  }
 
                   // Update corresponding TestLodge runs
                   for (var k = 0; k < linkedTestCaseRunIds.length; k++) {
                     updateTestLodge(localTestCaseRun, testRunId, linkedTestCaseRunIds[k]);
+                    numberOfUpdatedTestCaseRuns++;
                   }
                 }
               }
+              logger.debug('Triggered %d remote test case run updates.', numberOfUpdatedTestCaseRuns);
             } else {
               logger.error('Error getting list of test case runs. Status code: %s', response.statusCode);
               if (error) {
