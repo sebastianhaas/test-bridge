@@ -46,6 +46,8 @@ will update a test case in your test management tool labeled `TC02`.
 ### CI Plugins
 When test-bridge is included in your CI builds, it can retrieve information about the current build using CI plugins. For instance, when
 using git-flow, you can configure test-bridge to only update test results for commits on the release branch.
+You can tell test-bridge on which branches to trigger by specifiying a regex pattern. This will also be used to determine the name of the
+test run to be updated in your test management tool. The default pattern that will be used is https://regex101.com/r/kS8bR1/1.
 
 ### Test management tool plugins
 Test management tool plugins take the result from reporter plugins and update all test case runs with the results of the latest test
