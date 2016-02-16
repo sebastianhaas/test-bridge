@@ -2,6 +2,7 @@
  * Test case management plugin for TestLodge.
  */
 
+var async = require('async');
 var colors = require('colors');
 var log4js = require('log4js');
 var logger = log4js.getLogger('managementPlugin');
@@ -36,7 +37,7 @@ var defaultOptions = {
  */
 var testRunSections = {};
 
-function updateTestCaseRuns(localTestRuns) {
+function updateTestCaseRuns(localTestRuns, cb) {
 
   // Merge options
   module.exports.options = merge(defaultOptions, module.exports.options);
@@ -83,7 +84,9 @@ function updateTestCaseRuns(localTestRuns) {
           }, function(error, response, body) {
             if (!error && response.statusCode == 200) {
               logger.debug('Retrieved list of test case runs.');
-              var numberOfUpdatedTestCaseRuns = 0;
+              var asyncTasks = [];
+              var numberOfUpdatedTestCaseRunsCompleted = 0;
+              var numberOfUpdatedTestCaseRunsTriggered = 0;
 
               // Loop over local test case runs
               for (var i = 0; i < localTestRuns.length; i++) {
@@ -103,38 +106,43 @@ function updateTestCaseRuns(localTestRuns) {
                     linkedTestCaseRunIds = getLinkedTestCaseRunIds(linkedTestCase, localTestCaseRun.browser, body);
                   }
 
-                  // Update corresponding TestLodge runs
+                  // Push update on stack of tests to be updated
                   for (var k = 0; k < linkedTestCaseRunIds.length; k++) {
-                    updateTestLodge(localTestCaseRun, testRunId, linkedTestCaseRunIds[k]);
-                    numberOfUpdatedTestCaseRuns++;
+                    asyncTasks.push(updateTestLodge.bind(null, localTestCaseRun, testRunId, linkedTestCaseRunIds[k]));
+                    numberOfUpdatedTestCaseRunsTriggered++;
                   }
                 }
               }
-              logger.debug('Triggered %d remote test case run updates.', numberOfUpdatedTestCaseRuns);
-            } else {
-              logger.error('Error getting list of test case runs. Status code: %s', response.statusCode);
-              if (error) {
-                logger.debug(error);
+
+              // Send updates to TestLodge
+              if (asyncTasks.length > 0) {
+                async.parallel(asyncTasks, function(err, results) {
+                  if (err) {
+                    cb(err);
+                  } else {
+                    cb(null, results.length);
+                  }
+                });
               }
+
+              logger.debug('Triggered %d remote test case run updates.', numberOfUpdatedTestCaseRunsTriggered);
+            } else {
+              bailOut(util.format('Error getting list of test case runs. Status code: %s', response.statusCode),
+               error, cb);
             }
           });
         } else {
-          logger.error('Error getting list of test run sections. Status code: %s', response.statusCode);
-          if (error) {
-            logger.debug(error);
-          }
+          bailOut(util.format('Error getting list of test run sections. Status code: %s', response.statusCode),
+            error, cb);
         }
       });
     } else {
-      logger.error('Error getting list of test runs. Status code: %s', response.statusCode);
-      if (error) {
-        logger.debug(error);
-      }
+      bailOut(util.format('Error getting list of test runs. Status code: %s', response.statusCode), error, cb);
     }
   });
 }
 
-function updateTestLodge(localTestRun, testRunId, testRunCaseRunId) {
+function updateTestLodge(localTestRun, testRunId, testRunCaseRunId, cb) {
   var passed;
   var actualResult;
 
@@ -165,12 +173,11 @@ function updateTestLodge(localTestRun, testRunId, testRunCaseRunId) {
     }
   }, function(error, response, body) {
     if (!error && response.statusCode == 200) {
-      logger.info('Test case %s updated - %s', testRunCaseRunId, coloredStatusOutput(passed));
+      logger.info('Test case %s updated successfully. Result: %s', testRunCaseRunId, coloredStatusOutput(passed));
+      cb(null, testRunCaseRunId);
     } else {
-      logger.error('Error updating test case %s. Status code: %s', testRunCaseRunId, response.statusCode);
-      if (error) {
-        logger.debug(error);
-      }
+      bailOut(util.format('Error updating test case %s. Status code: %s', testRunCaseRunId, response.statusCode),
+        error, cb);
     }
   });
 }
@@ -194,6 +201,8 @@ function getLinkedTestCaseRunIds(testCaseIdentifier, localConfiguration, caseRun
       }
     }
   }
+  logger.debug('Found %s test case runs matching the linked test case (%s) and current configuration (%s).',
+    linkedTestCaseRunIds.length, testCaseIdentifier, localConfiguration);
   return linkedTestCaseRunIds;
   //jscs:enable requireCamelCaseOrUpperCaseIdentifiers
 }
@@ -245,5 +254,13 @@ function coloredStatusOutput(testResult) {
     return 'failed'.red;
   } else {
     return 'not run'.yellow;
+  }
+}
+
+function bailOut(msg, error, cb) {
+  cb(new Error(msg, error));
+  logger.error(msg);
+  if (error) {
+    logger.debug(error);
   }
 }
