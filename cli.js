@@ -56,11 +56,16 @@ if (program.testRun) {
 }
 
 if (program.verbose) {
-  logger.setLevel('DEBUG');
-  log4js.getLogger('ciPlugin').setLevel('DEBUG');
-  log4js.getLogger('reporterPlugin').setLevel('DEBUG');
-  log4js.getLogger('managementPlugin').setLevel('DEBUG');
+  testBridge.setLogLevel('DEBUG');
+} else {
+  testBridge.setLogLevel('INFO');
 }
 
 // Actual code
-testBridge.execute(cmdLineOptions);
+testBridge.execute(cmdLineOptions, function(err, result) {
+  if (!err) {
+    logger.info('Updated %d test runs remotely.', result);
+  } else {
+    logger.error('An error occurred.', err);
+  }
+});

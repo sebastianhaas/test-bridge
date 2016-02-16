@@ -3,12 +3,14 @@
  */
 module.exports = {
   execute: execute,
+  setLogLevel: setLogLevel
 };
 
 /*
  * Dependencies
  */
-var logger = require('log4js').getLogger();
+var log4js = require('log4js');
+var logger = log4js.getLogger();
 var merge = require('merge');
 
 /*
@@ -29,7 +31,7 @@ var defaultOptions = {
 /**
  * Main program
  */
-function execute(options) {
+function execute(options, cb) {
 
   // Merge options with defaults and options file
   var rcOptions = getRCOptions();
@@ -76,7 +78,7 @@ function execute(options) {
 
   // Update local test results in remote test management tool
   if (localTestRuns.length > 0) {
-    management.updateTestCaseRuns(localTestRuns);
+    management.updateTestCaseRuns(localTestRuns, cb);
   } else {
     logger.info('No local test results contained linked test cases.');
     process.exit();
@@ -97,8 +99,18 @@ function getTestRunFromBranch(branchName, pattern) {
  */
 function injectPluginDependencies(ciPluginName, reporterPluginName, managementPluginName) {
   // Required plugins
-  reporter = require('./reporters/' + reporterPluginName);
-  management = require('./management/' + managementPluginName);
+  if (reporterPluginName) {
+    reporter = require('./reporters/' + reporterPluginName);
+  } else {
+    logger.error('No reporter plugin specified.');
+    process.exit(1);
+  }
+  if (managementPluginName) {
+    management = require('./management/' + managementPluginName);
+  } else {
+    logger.error('No management plugin specified.');
+    process.exit(1);
+  }
 
   // Optional plugins
   if (ciPluginName) {
@@ -149,4 +161,15 @@ function fillEnvironmentVariablePlaceholders(options) {
       }
     }
   }
+}
+
+function setLogLevel(logLevel) {
+  log4js.configure({
+    appenders: [
+      {type: 'console'}
+    ],
+    levels: {
+      '[all]': logLevel
+    }
+  });
 }

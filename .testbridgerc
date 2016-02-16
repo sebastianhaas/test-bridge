@@ -3,10 +3,11 @@
     "name": "${TESTLODGE_NAME}",
     "project": "${TESTLODGE_PROJECT}",
     "email": "${TESTLODGE_LOGIN_EMAIL}",
-    "password": "${TESTLODGE_LOGIN_PASSWORD}"
+    "password": "${TESTLODGE_LOGIN_PASSWORD}",
+    "overrideConfiguration": "Chrome"
   },
   "ciOptions": {},
   "reporterOptions": {
-  	"file": "yourTestResult.json"
+  	"file": "tests/reporters/mochaJson/mochaTestResults.json"
   }
 }
