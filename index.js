@@ -35,11 +35,14 @@ function execute(options, cb) {
 
   // Merge options with defaults and options file
   var rcOptions = getRCOptions();
-  rcOptions = merge(defaultOptions, rcOptions);
-  options = merge(rcOptions, options);
+  rcOptions = merge.recursive(defaultOptions, rcOptions);
+  options = merge.recursive(rcOptions, options);
 
   // Inject plugins
-  injectPluginDependencies(options.ci, options.reporter, options.management);
+  if (!injectPluginDependencies(options.ci, options.reporter, options.management)) {
+    cb(new Error(), 0);
+    return;
+  }
 
   // Pass options to injected plugins
   reporter.options = options.reporterOptions;
@@ -59,7 +62,8 @@ function execute(options, cb) {
     management.testRunIdentifier = getTestRunFromBranch(ciBranchName, options.branchPattern);
     if (!management.testRunIdentifier) {
       logger.info('Current branch \'%s\' did not trigger a test repository update.', ciBranchName);
-      process.exit();
+      cb(null, 0);
+      return;
     } else {
       logger.info('Current branch \'%s\' triggered a test repository update for test run \'%s\'',
         ciBranchName, management.testRunIdentifier);
@@ -68,9 +72,15 @@ function execute(options, cb) {
     if (!options.testRunIdentifier) {
       logger.error('If branch name extraction is not enabled, and/or no CI plugin enabled, you must specify the ' +
         'remote test run to be updated by name.');
-      process.exit(1);
+      cb(new Error(), 0);
+      return;
     }
     management.testRunIdentifier = options.testRunIdentifier;
+
+    if(!ci && options.extractTestRunFromBranchName) {
+      logger.warn('Option \'--extractTestRunFromBranchName\' has no effect without a CI plugin loaded. ' +
+        'Using \'--testRun\' instead.');
+    }
   }
 
   // Get local test case runs
@@ -81,7 +91,8 @@ function execute(options, cb) {
     management.updateTestCaseRuns(localTestRuns, cb);
   } else {
     logger.info('No local test results contained linked test cases.');
-    process.exit();
+    cb(null, 0);
+    return;
   }
 }
 
@@ -103,19 +114,20 @@ function injectPluginDependencies(ciPluginName, reporterPluginName, managementPl
     reporter = require('./reporters/' + reporterPluginName);
   } else {
     logger.error('No reporter plugin specified.');
-    process.exit(1);
+    return false;
   }
   if (managementPluginName) {
     management = require('./management/' + managementPluginName);
   } else {
     logger.error('No management plugin specified.');
-    process.exit(1);
+    return false;
   }
 
   // Optional plugins
   if (ciPluginName) {
     ci = require('./ci/' + ciPluginName);
   }
+  return true;
 }
 
 function getRCOptions(file) {
@@ -153,7 +165,6 @@ function fillEnvironmentVariablePlaceholders(options) {
             options[property] = process.env[match[1]];
           } else {
             logger.error('Failed to replace \'%s\' with value from environment variable.', options[property]);
-            process.exit(1);
           }
         }
         // Reset internal regexp index

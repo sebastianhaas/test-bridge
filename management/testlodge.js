@@ -40,11 +40,12 @@ var testRunSections = {};
 function updateTestCaseRuns(localTestRuns, cb) {
 
   // Merge options
-  module.exports.options = merge(defaultOptions, module.exports.options);
+  module.exports.options = merge.recursive(defaultOptions, module.exports.options);
 
   if (!module.exports.testRunIdentifier) {
     logger.error('No test run identifier specified.');
-    process.exit(1);
+    cb(new Error(), 0);
+    return;
   }
 
   // Get the ID for the specified test run
@@ -63,7 +64,8 @@ function updateTestCaseRuns(localTestRuns, cb) {
         logger.warn('Could not find a corresponding test run for identifier \'%s\'.' +
           ' Did not update any test case runs.',
           module.exports.testRunIdentifier);
-        process.exit(0);
+        cb(null, 0);
+        return;
       }
 
       // Get the ID for the specified test run
@@ -127,17 +129,18 @@ function updateTestCaseRuns(localTestRuns, cb) {
 
               logger.debug('Triggered %d remote test case run updates.', numberOfUpdatedTestCaseRunsTriggered);
             } else {
-              bailOut(util.format('Error getting list of test case runs. Status code: %s', response.statusCode),
-               error, cb);
+              bailOut(util.format('Error getting list of test case runs.', error, response, cb));
+              return;
             }
           });
         } else {
-          bailOut(util.format('Error getting list of test run sections. Status code: %s', response.statusCode),
-            error, cb);
+          bailOut('Error getting list of test run sections.', error, response, cb);
+          return;
         }
       });
     } else {
-      bailOut(util.format('Error getting list of test runs. Status code: %s', response.statusCode), error, cb);
+      bailOut('Error getting list of test runs.', error, response, cb);
+      return;
     }
   });
 }
@@ -176,8 +179,7 @@ function updateTestLodge(localTestRun, testRunId, testRunCaseRunId, cb) {
       logger.info('Test case %s updated successfully. Result: %s', testRunCaseRunId, coloredStatusOutput(passed));
       cb(null, testRunCaseRunId);
     } else {
-      bailOut(util.format('Error updating test case %s. Status code: %s', testRunCaseRunId, response.statusCode),
-        error, cb);
+      bailOut(util.format('Error updating test case %s.', testRunCaseRunId), error, response, cb);
     }
   });
 }
@@ -257,7 +259,10 @@ function coloredStatusOutput(testResult) {
   }
 }
 
-function bailOut(msg, error, cb) {
+function bailOut(msg, error, response, cb) {
+  if(response) {
+    msg = util.format('%s (Status code: %d)', msg, response.statusCode);
+  }
   cb(new Error(msg, error));
   logger.error(msg);
   if (error) {
