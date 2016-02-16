@@ -64,6 +64,24 @@ extracts the test run name that will be passed to testlodge later on, using the 
 Test management tool plugins take the result from reporter plugins and update all test case runs with the results of the latest test
 execution.
 
+### Command line usage
+```shell
+$ test-bridge --help
+
+  Usage: test-bridge [options]
+
+  Options:
+
+    -h, --help                                    output usage information
+    -V, --version                                 output the version number
+    -c, --ci <pluginName>                         The CI plugin to use
+    -r, --reporter <pluginName>                   The reporter plugin to use
+    -m, --management <pluginName>                 The management plugin to use
+    -t, --testRun <identifier>                    The test run to be updated by the management plugin
+    -e, --extractTestRunFromBranchName [pattern]  Extract test run pattern from branch name. Optionall extraction regex. Only available with a CI plugin.
+    -v, --verbose                                 Verbose logging
+```
+
 ### Configuration
 test-bridge requires a filed named `.testbridgerc` in the root directory. This file can be used to pass additional configuration to plugins
 that can't be set via command line arguments. If you are using test-bridge via it's API, you have to pass options to test-bridge's main
